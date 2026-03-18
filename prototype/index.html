@@ -548,27 +548,334 @@
                   <label className="block text-[12px] font-semibold text-black/60">Method</label>
                   <div className="mt-2 grid grid-cols-3 gap-2">
                     {["Tap", "Chip", "Online"].map((m) => (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => {
-                          setPayment((p) => ({ ...p, method: m }));
-                          setSheet(null);
-                          showToast("Payment updated");
-                        }}
-                        className={classNames(
-                          "rounded-2xl border px-3 py-3 text-[13px] font-semibold",
-                          m === payment.method
-                            ? "border-blue-500/30 bg-blue-500/10 text-accent-blueInk"
-                            : "border-paper-line bg-white text-paper-ink"
-                        )}
-                      >
-                        {m}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-3 text-[12px] text-black/55">
-                    Card: <span className="font-semibold text-paper-ink">{payment.name} •• {payment.last4}</span>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expense Entry - Vanilla</title>
+  <style>
+    :root {
+      --bg-paper: #F7F6F3;
+      --ink: #1E1E1E;
+      --card: #FFFFFF;
+      --line: rgba(20,20,20,0.08);
+      --muted: rgba(30,30,30,0.62);
+      --subtle: rgba(30,30,30,0.50);
+      --accent-blue: #2F6BFF;
+      --accent-blue-ink: #1D4ED8;
+      --accent-lime: #B7FF4A;
+      --accent-lime-muted: rgba(183,255,74,0.22);
+      --accent-lime-border: rgba(183,255,74,0.35);
+      --shadow-soft: 0 1px 2px rgba(0,0,0,0.05);
+      --radius-xl2: 18px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--bg-paper);
+      color: var(--ink);
+      font-family: 'Inter', -apple-system, sans-serif;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 390px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Header & General UI */
+    .header { display: flex; flex-direction: column; gap: 14px; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; }
+    
+    .btn-icon {
+      width: 36px; height: 36px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: white;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+
+    .status-pill {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(47, 107, 255, 0.1);
+      border: 1px solid rgba(47, 107, 255, 0.2);
+      padding: 6px 12px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-blue-ink);
+    }
+
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-blue); }
+
+    /* Cards */
+    .card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl2);
+      padding: 16px;
+      shadow: var(--shadow-soft);
+    }
+
+    .label-caps {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--subtle);
+      margin-bottom: 4px;
+    }
+
+    .amount-display {
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .currency { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+
+    /* Row Item */
+    .row-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-top: 1px solid var(--line);
+      cursor: pointer;
+      width: 100%;
+      background: none;
+      border-left: none; border-right: none; border-bottom: none;
+    }
+
+    .row-content { display: flex; align-items: center; gap: 12px; text-align: left;}
+    .row-icon {
+      width: 36px; height: 36px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--line);
+    }
+
+    .row-icon.blue { background: rgba(47, 107, 255, 0.1); color: var(--accent-blue); border-color: rgba(47, 107, 255, 0.1); }
+    .row-icon.lime { background: var(--accent-lime-muted); color: var(--ink); border-color: var(--accent-lime-border); }
+
+    .row-text .title { font-size: 11px; color: var(--muted); }
+    .row-text .value { font-size: 14px; font-weight: 600; }
+
+    .chip {
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(0,0,0,0.05);
+      border: 1px solid var(--line);
+    }
+
+    /* Action Button */
+    .btn-save {
+      width: 100%;
+      height: 54px;
+      background: var(--accent-blue);
+      color: white;
+      border: none;
+      border-radius: var(--radius-xl2);
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: auto;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+      display: none; align-items: flex-end; justify-content: center; padding: 16px; z-index: 100;
+    }
+    .modal-content {
+      background: white; width: 100%; max-width: 360px;
+      border-radius: 24px; overflow: hidden;
+      animation: slideUp 0.2s ease-out;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .modal-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center;}
+    .modal-body { padding: 20px 16px; }
+
+    .input-field {
+      width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--line);
+      font-size: 16px; font-weight: 600; outline: none;
+    }
+
+    .toast {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      background: var(--ink); color: white; padding: 8px 16px; border-radius: 99px;
+      font-size: 12px; font-weight: 600; display: none; z-index: 200;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <div class="header">
+      <div class="header-top">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="btn-icon" onclick="toast('Back')">
+            <svg width="18" height="18" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"/></svg>
+          </button>
+          <div>
+            <div style="font-size: 12px; color: var(--muted)">New expense</div>
+            <div style="font-size: 18px; font-weight: 700;">Entry</div>
+          </div>
+        </div>
+        <div class="status-pill"><span class="dot"></span>Today</div>
+      </div>
+
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div class="label-caps">Amount</div>
+            <div style="display: flex; align-items: baseline; gap: 6px;">
+              <button class="amount-display" id="display-amount" onclick="openModal()">$28.40</button>
+              <span class="currency">USD</span>
+            </div>
+          </div>
+          <button class="btn-icon" style="background: var(--accent-blue); color: white; width: 48px; height: 48px; border: none; border-radius: 16px;" onclick="toast('Insights')">
+            <svg width="22" height="22" viewBox="0 0 256 256" fill="currentColor"><path d="M240,56v64a8,8,0,0,1-16,0V75.31l-82.34,82.35a8,8,0,0,1-11.32,0L96,123.31,29.66,189.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0L136,140.69,212.69,64H168a8,8,0,0,1,0-16h64A8,8,0,0,1,240,56Z"/></svg>
+          </button>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 12px;">
+          <button class="row-item" style="background: var(--accent-lime-muted); border: 1px solid var(--accent-lime-border); border-radius: 14px; padding: 10px 12px; margin: 0;">
+            <span style="font-size: 13px; font-weight: 600;">Personal</span>
+            <span style="font-size: 12px; opacity: 0.6;">Wallet</span>
+          </button>
+          <button class="btn-icon" style="height: 44px; width: 44px; border-radius: 14px;" onclick="toast('Split Added')">
+            <svg width="18" height="18" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 16px 16px 4px 16px;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+        <div class="label-caps">Details</div>
+        <div style="font-size: 11px; color: var(--subtle); font-weight: 600;">Auto-saved</div>
+      </div>
+
+      <button class="row-item" onclick="toast('Edit Merchant')">
+        <div class="row-content">
+          <div class="row-icon blue"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M232,96a7.89,7.89,0,0,0-.3-2.2L217.35,43.6A16.07,16.07,0,0,0,202,32H54A16.07,16.07,0,0,0,38.65,43.6L24.31,93.8A7.89,7.89,0,0,0,24,96h0v16a40,40,0,0,0,16,32v72a8,8,0,0,0,8,8H208a8,8,0,0,0,8-8V144a40,40,0,0,0,16-32V96ZM54,48H202l11.42,40H42.61Z"/></svg></div>
+          <div class="row-text"><div class="title">Merchant</div><div class="value">Blue Bottle Coffee</div></div>
+        </div>
+        <div class="btn-icon" style="width:32px; height:32px;"><svg width="14" height="14" viewBox="0 0 256 256"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg></div>
+      </button>
+
+      <button class="row-item" onclick="toast('Edit Category')">
+        <div class="row-content">
+          <div class="row-icon lime"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M243.31,136,144,36.69A15.86,15.86,0,0,0,132.69,32H40a8,8,0,0,0-8,8v92.69A15.86,15.86,0,0,0,36.69,144L136,243.31a16,16,0,0,0,22.63,0l84.68-84.68a16,16,0,0,0,0-22.63ZM96,84A12,12,0,1,1,84,72,12,12,0,0,1,96,84Z"/></svg></div>
+          <div class="row-text"><div class="title">Category</div><div class="value">Food & drink</div></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="chip">Coffee</span>
+          <div class="btn-icon" style="width:32px; height:32px;"><svg width="14" height="14" viewBox="0 0 256 256"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg></div>
+        </div>
+      </button>
+
+      <button class="row-item" onclick="toast('Edit Date')">
+        <div class="row-content">
+          <div class="row-icon"><svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/></svg></div>
+          <div class="row-text"><div class="title">Date</div><div class="value">Tue, Mar 17</div></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:12px; font-weight:600; opacity:0.6;">11:42 AM</span>
+          <div class="btn-icon" style="width:32px; height:32px;"><svg width="14" height="14" viewBox="0 0 256 256"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg></div>
+        </div>
+      </button>
+    </div>
+
+    <button class="btn-save" onclick="toast('Expense Saved')">
+      <span>Save expense</span>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 99px; font-size: 12px;" id="btn-amount-label">$28.40</span>
+        <div style="background: rgba(255,255,255,0.2); width:34px; height:34px; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+          <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></svg>
+        </div>
+      </div>
+    </button>
+  </div>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span style="font-size: 14px; font-weight: 700;">Edit amount</span>
+        <button onclick="closeModal()" style="border: 1px solid var(--line); background: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; cursor: pointer;">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="label-caps">Amount (USD)</div>
+        <input type="number" id="amount-input" class="input-field" value="28.40" step="0.01">
+        <button onclick="saveAmount()" style="width: 100%; margin-top: 16px; background: var(--accent-blue); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer;">Update Amount</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Saved</div>
+
+  <script>
+    const modal = document.getElementById('modal');
+    const toastEl = document.getElementById('toast');
+    const amountInput = document.getElementById('amount-input');
+    const displayAmount = document.getElementById('display-amount');
+    const btnAmountLabel = document.getElementById('btn-amount-label');
+
+    function toast(msg) {
+      toastEl.innerText = msg;
+      toastEl.style.display = 'block';
+      setTimeout(() => { toastEl.style.display = 'none'; }, 2000);
+    }
+
+    function openModal() {
+      modal.style.display = 'flex';
+      amountInput.focus();
+    }
+
+    function closeModal() {
+      modal.style.display = 'none';
+    }
+
+    function saveAmount() {
+      const val = parseFloat(amountInput.value).toFixed(2);
+      if (!isNaN(val)) {
+        displayAmount.innerText = `$${val}`;
+        btnAmountLabel.innerText = `$${val}`;
+        toast('Amount updated');
+      }
+      closeModal();
+    }
+
+    // Close modal on escape
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // Close modal on backdrop click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+  </script>
+</body>
+</html>
+>
                   </div>
                 </Modal>
               ) : null}
