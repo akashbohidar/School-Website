@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Expense Entry Prototype</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              paper: {
+                bg: "#F7F6F3",
+                ink: "#1E1E1E",
+                card: "#FFFFFF",
+                line: "rgba(20,20,20,0.08)",
+                muted: "rgba(30,30,30,0.62)",
+                subtle: "rgba(30,30,30,0.50)",
+              },
+              accent: {
+                blue: "#2F6BFF",
+                blueInk: "#1D4ED8",
+                lime: "#B7FF4A",
+              },
+            },
+            borderRadius: {
+              xl2: "18px",
+              xl3: "22px",
+            },
+            boxShadow: {
+              soft: "0 1px 0 rgba(0,0,0,0.03)",
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body {
+        height: 100%;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+          Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      }
+    </style>
+
+    <!-- React (UMD) -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <!-- Babel for in-browser JSX (prototype only) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+
+  <body class="bg-paper-bg">
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useMemo, useState } = React;
+
+      function classNames(...xs) {
+        return xs.filter(Boolean).join(" ");
+      }
+
+      function Icon({ name, className }) {
+        // Phosphor regular icons (inline SVG paths, set to fill="currentColor")
+        // Source: @phosphor-icons/core regular SVGs (viewBox 0 0 256 256).
+        const icons = useMemo(
+          () => ({
+            arrowLeft: (
+              <path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z" />
+            ),
+            caretRight: (
+              <path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z" />
+            ),
+            plus: (
+              <path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z" />
+            ),
+            trendUp: (
+              <path d="M240,56v64a8,8,0,0,1-16,0V75.31l-82.34,82.35a8,8,0,0,1-11.32,0L96,123.31,29.66,189.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0L136,140.69,212.69,64H168a8,8,0,0,1,0-16h64A8,8,0,0,1,240,56Z" />
+            ),
+            storefront: (
+              <path d="M232,96a7.89,7.89,0,0,0-.3-2.2L217.35,43.6A16.07,16.07,0,0,0,202,32H54A16.07,16.07,0,0,0,38.65,43.6L24.31,93.8A7.89,7.89,0,0,0,24,96h0v16a40,40,0,0,0,16,32v72a8,8,0,0,0,8,8H208a8,8,0,0,0,8-8V144a40,40,0,0,0,16-32V96ZM54,48H202l11.42,40H42.61Zm50,56h48v8a24,24,0,0,1-48,0Zm-16,0v8a24,24,0,0,1-35.12,21.26,7.88,7.88,0,0,0-1.82-1.06A24,24,0,0,1,40,112v-8ZM200,208H56V151.2a40.57,40.57,0,0,0,8,.8,40,40,0,0,0,32-16,40,40,0,0,0,64,0,40,40,0,0,0,32,16,40.57,40.57,0,0,0,8-.8Zm4.93-75.8a8.08,8.08,0,0,0-1.8,1.05A24,24,0,0,1,168,112v-8h48v8A24,24,0,0,1,204.93,132.2Z" />
+            ),
+            tag: (
+              <path d="M243.31,136,144,36.69A15.86,15.86,0,0,0,132.69,32H40a8,8,0,0,0-8,8v92.69A15.86,15.86,0,0,0,36.69,144L136,243.31a16,16,0,0,0,22.63,0l84.68-84.68a16,16,0,0,0,0-22.63Zm-96,96L48,132.69V48h84.69L232,147.31ZM96,84A12,12,0,1,1,84,72,12,12,0,0,1,96,84Z" />
+            ),
+            calendarBlank: (
+              <path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z" />
+            ),
+            creditCard: (
+              <path d="M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48Zm0,16V88H32V64Zm0,128H32V104H224v88Zm-16-24a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h32A8,8,0,0,1,208,168Zm-64,0a8,8,0,0,1-8,8H120a8,8,0,0,1,0-16h16A8,8,0,0,1,144,168Z" />
+            ),
+            note: (
+              <path d="M88,96a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H96A8,8,0,0,1,88,96Zm8,40h64a8,8,0,0,0,0-16H96a8,8,0,0,0,0,16Zm32,16H96a8,8,0,0,0,0,16h32a8,8,0,0,0,0-16ZM224,48V156.69A15.86,15.86,0,0,1,219.31,168L168,219.31A15.86,15.86,0,0,1,156.69,224H48a16,16,0,0,1-16-16V48A16,16,0,0,1,48,32H208A16,16,0,0,1,224,48ZM48,208H152V160a8,8,0,0,1,8-8h48V48H48Zm120-40v28.7L196.69,168Z" />
+            ),
+            receipt: (
+              <path d="M72,104a8,8,0,0,1,8-8h96a8,8,0,0,1,0,16H80A8,8,0,0,1,72,104Zm8,40h96a8,8,0,0,0,0-16H80a8,8,0,0,0,0,16ZM232,56V208a8,8,0,0,1-11.58,7.15L192,200.94l-28.42,14.21a8,8,0,0,1-7.16,0L128,200.94,99.58,215.15a8,8,0,0,1-7.16,0L64,200.94,35.58,215.15A8,8,0,0,1,24,208V56A16,16,0,0,1,40,40H216A16,16,0,0,1,232,56Zm-16,0H40V195.06l20.42-10.22a8,8,0,0,1,7.16,0L96,199.06l28.42-14.22a8,8,0,0,1,7.16,0L160,199.06l28.42-14.22a8,8,0,0,1,7.16,0L216,195.06Z" />
+            ),
+          }),
+          []
+        );
+
+        return (
+          <svg
+            className={classNames("shrink-0", className)}
+            viewBox="0 0 256 256"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            {icons[name]}
+          </svg>
+        );
+      }
+
+      function Chip({ children, tone = "neutral" }) {
+        const toneClasses =
+          tone === "blue"
+            ? "bg-blue-500/10 text-accent-blueInk border-blue-500/20"
+            : "bg-black/5 text-black/70 border-black/10";
+        return (
+          <span
+            className={classNames(
+              "inline-flex items-center rounded-full border px-2.5 py-1 text-[12px] font-semibold",
+              toneClasses
+            )}
+          >
+            {children}
+          </span>
+        );
+      }
+
+      function Row({ icon, iconTone, label, value, right, onClick }) {
+        const iconWrap =
+          iconTone === "blue"
+            ? "bg-blue-500/10 border-blue-500/20 text-accent-blue"
+            : iconTone === "lime"
+            ? "bg-[color:rgba(183,255,74,0.22)] border-[color:rgba(183,255,74,0.35)] text-paper-ink"
+            : "bg-black/5 border-black/10 text-paper-ink";
+
+        return (
+          <button
+            type="button"
+            onClick={onClick}
+            className="w-full text-left"
+            aria-label={`${label}: ${value}`}
+          >
+            <div className="flex items-center justify-between gap-3 border-t border-paper-line py-2.5">
+              <div className="flex items-center gap-3">
+                <div
+                  className={classNames(
+                    "flex h-9 w-9 items-center justify-center rounded-2xl border",
+                    iconWrap
+                  )}
+                >
+                  <Icon name={icon} className="h-[18px] w-[18px]" />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <div className="text-[12px] text-black/55">{label}</div>
+                  <div className="text-[15px] font-semibold text-paper-ink">{value}</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {right}
+                <div className="flex h-9 w-9 items-center justify-center rounded-2xl border border-paper-line bg-white text-paper-ink">
+                  <Icon name="caretRight" className="h-[18px] w-[18px]" />
+                </div>
+              </div>
+            </div>
+          </button>
+        );
+      }
+
+      function Modal({ title, children, onClose }) {
+        React.useEffect(() => {
+          const onKey = (e) => {
+            if (e.key === "Escape") onClose();
+          };
+          window.addEventListener("keydown", onKey);
+          return () => window.removeEventListener("keydown", onKey);
+        }, [onClose]);
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 p-4">
+            <div className="w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-paper-line px-4 py-3">
+                <div className="text-[14px] font-semibold text-paper-ink">{title}</div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-2xl border border-paper-line bg-white px-3 py-1.5 text-[12px] font-semibold text-paper-ink"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="px-4 py-4">{children}</div>
+            </div>
+          </div>
+        );
+      }
+
+      function ExpenseEntry() {
+        const [amount, setAmount] = useState("28.40");
+        const [merchant, setMerchant] = useState("Blue Bottle Coffee");
+        const [category, setCategory] = useState({ group: "Food & drink", tag: "Coffee" });
+        const [date, setDate] = useState("2026-03-17");
+        const [time, setTime] = useState("11:42");
+        const [payment, setPayment] = useState({ name: "Visa", last4: "0421", method: "Tap" });
+        const [note, setNote] = useState("Team sync cafe stop — reimbursable.");
+        const [receiptCount, setReceiptCount] = useState(0);
+        const [toast, setToast] = useState(null);
+
+        const [sheet, setSheet] = useState(null);
+
+        const displayDate = useMemo(() => {
+          try {
+            const d = new Date(date + "T00:00:00");
+            return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+          } catch {
+            return date;
+          }
+        }, [date]);
+
+        const displayTime = useMemo(() => {
+          try {
+            const [h, m] = time.split(":").map((x) => parseInt(x, 10));
+            const d = new Date();
+            d.setHours(h);
+            d.setMinutes(m);
+            return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+          } catch {
+            return time;
+          }
+        }, [time]);
+
+        const parsedAmount = useMemo(() => {
+          const n = Number(amount);
+          return Number.isFinite(n) ? n : 0;
+        }, [amount]);
+
+        function showToast(message) {
+          setToast(message);
+          window.clearTimeout(showToast._t);
+          showToast._t = window.setTimeout(() => setToast(null), 1800);
+        }
+
+        function save() {
+          showToast("Saved expense");
+        }
+
+        function addReceipt() {
+          setReceiptCount((c) => c + 1);
+          showToast("Receipt added");
+        }
+
+        return (
+          <div className="min-h-screen w-full bg-paper-bg">
+            <div className="mx-auto flex min-h-screen w-[390px] max-w-full flex-col gap-4 px-5 py-5">
+              {/* Header */}
+              <div className="flex flex-col gap-3.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      className="flex h-9 w-9 items-center justify-center rounded-2xl border border-paper-line bg-white text-paper-ink"
+                      onClick={() => showToast("Back")}
+                      aria-label="Back"
+                    >
+                      <Icon name="arrowLeft" className="h-[18px] w-[18px]" />
+                    </button>
+                    <div className="flex flex-col leading-tight">
+                      <div className="text-[13px] tracking-wide text-black/60">New expense</div>
+                      <div className="text-[20px] font-semibold tracking-[-0.02em] text-paper-ink">Entry</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-2">
+                    <span className="h-2 w-2 rounded-full bg-accent-blue"></span>
+                    <span className="text-[12px] font-semibold text-accent-blueInk">Today</span>
+                  </div>
+                </div>
+
+                {/* Amount card */}
+                <div className="rounded-xl2 border border-paper-line bg-white p-4 shadow-soft">
+                  <div className="flex items-end justify-between gap-3">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="text-[12px] uppercase tracking-[0.08em] text-black/50">Amount</div>
+                      <div className="flex items-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setSheet("amount")}
+                          className="text-[40px] font-bold tracking-[-0.04em] text-paper-ink leading-[44px]"
+                          aria-label="Edit amount"
+                        >
+                          ${parsedAmount.toFixed(2)}
+                        </button>
+                        <div className="pb-1.5 text-[14px] font-semibold text-black/60">USD</div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => showToast("Insights")}
+                      className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-accent-blue text-white"
+                      aria-label="Insights"
+                    >
+                      <Icon name="trendUp" className="h-[22px] w-[22px]" />
+                    </button>
+                  </div>
+
+                  <div className="mt-3 flex gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setSheet("account")}
+                      className="flex flex-1 items-center justify-between rounded-2xl border border-[color:rgba(183,255,74,0.38)] bg-[color:rgba(183,255,74,0.22)] px-3 py-2.5"
+                    >
+                      <span className="text-[13px] font-semibold text-paper-ink">Personal</span>
+                      <span className="text-[12px] text-black/65">Wallet</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => showToast("Split")}
+                      className="flex h-11 w-11 items-center justify-center rounded-2xl border border-paper-line bg-white text-paper-ink"
+                      aria-label="Add split"
+                    >
+                      <Icon name="plus" className="h-[18px] w-[18px]" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Details */}
+              <div className="rounded-xl2 border border-paper-line bg-white p-4 shadow-soft">
+                <div className="flex items-end justify-between">
+                  <div className="text-[12px] uppercase tracking-[0.08em] text-black/50">Details</div>
+                  <div className="text-[12px] font-semibold text-black/60">Auto-saved</div>
+                </div>
+
+                <Row
+                  icon="storefront"
+                  iconTone="blue"
+                  label="Merchant"
+                  value={merchant}
+                  onClick={() => setSheet("merchant")}
+                />
+
+                <Row
+                  icon="tag"
+                  iconTone="lime"
+                  label="Category"
+                  value={category.group}
+                  right={<Chip>{category.tag}</Chip>}
+                  onClick={() => setSheet("category")}
+                />
+
+                <Row
+                  icon="calendarBlank"
+                  iconTone="neutral"
+                  label="Date"
+                  value={displayDate}
+                  right={<span className="text-[12px] font-semibold text-black/65">{displayTime}</span>}
+                  onClick={() => setSheet("datetime")}
+                />
+
+                <Row
+                  icon="creditCard"
+                  iconTone="blue"
+                  label="Payment"
+                  value={`${payment.name} •• ${payment.last4}`}
+                  right={<Chip tone="blue">{payment.method}</Chip>}
+                  onClick={() => setSheet("payment")}
+                />
+
+                <Row
+                  icon="note"
+                  iconTone="neutral"
+                  label="Note"
+                  value={note}
+                  onClick={() => setSheet("note")}
+                />
+
+                <Row
+                  icon="receipt"
+                  iconTone="blue"
+                  label="Receipt"
+                  value="Attach photo"
+                  right={<Chip>{receiptCount} files</Chip>}
+                  onClick={addReceipt}
+                />
+              </div>
+
+              <div className="flex-1" />
+
+              {/* Footer */}
+              <div className="pb-3">
+                <button
+                  type="button"
+                  onClick={save}
+                  className="flex h-[54px] w-full items-center justify-between rounded-xl2 bg-accent-blue px-4 text-white"
+                >
+                  <span className="text-[15px] font-bold tracking-[-0.01em]">Save expense</span>
+                  <span className="flex items-center gap-2.5">
+                    <span className="rounded-full bg-white/20 px-2.5 py-1 text-[12px] font-bold">
+                      ${parsedAmount.toFixed(2)}
+                    </span>
+                    <span className="flex h-[34px] w-[34px] items-center justify-center rounded-2xl bg-white/20">
+                      <Icon name="caretRight" className="h-[18px] w-[18px]" />
+                    </span>
+                  </span>
+                </button>
+              </div>
+
+              {/* Toast */}
+              {toast ? (
+                <div className="fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-full bg-paper-ink px-4 py-2 text-[12px] font-semibold text-white shadow-lg">
+                  {toast}
+                </div>
+              ) : null}
+
+              {/* Sheets */}
+              {sheet === "amount" ? (
+                <Modal title="Edit amount" onClose={() => setSheet(null)}>
+                  <label className="block text-[12px] font-semibold text-black/60">Amount (USD)</label>
+                  <input
+                    className="mt-2 w-full rounded-2xl border border-paper-line px-3 py-3 text-[16px] font-semibold text-paper-ink outline-none focus:border-blue-500/30"
+                    inputMode="decimal"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))}
+                  />
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      className="rounded-2xl bg-accent-blue px-4 py-2 text-[13px] font-bold text-white"
+                      onClick={() => {
+                        setSheet(null);
+                        showToast("Amount updated");
+                      }}
+                    >
+                      Done
+                    </button>
+                  </div>
+                </Modal>
+              ) : null}
+
+              {sheet === "merchant" ? (
+                <Modal title="Merchant" onClose={() => setSheet(null)}>
+                  <label className="block text-[12px] font-semibold text-black/60">Merchant name</label>
+                  <input
+                    className="mt-2 w-full rounded-2xl border border-paper-line px-3 py-3 text-[16px] font-semibold text-paper-ink outline-none focus:border-blue-500/30"
+                    value={merchant}
+                    onChange={(e) => setMerchant(e.target.value)}
+                  />
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      className="rounded-2xl bg-accent-blue px-4 py-2 text-[13px] font-bold text-white"
+                      onClick={() => {
+                        setSheet(null);
+                        showToast("Merchant updated");
+                      }}
+                    >
+                      Done
+                    </button>
+                  </div>
+                </Modal>
+              ) : null}
+
+              {sheet === "category" ? (
+                <Modal title="Category" onClose={() => setSheet(null)}>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { group: "Food & drink", tag: "Coffee" },
+                      { group: "Food & drink", tag: "Lunch" },
+                      { group: "Transport", tag: "Taxi" },
+                      { group: "Transport", tag: "Transit" },
+                      { group: "Shopping", tag: "Supplies" },
+                      { group: "Entertainment", tag: "Tickets" },
+                    ].map((c) => (
+                      <button
+                        key={c.group + c.tag}
+                        type="button"
+                        onClick={() => {
+                          setCategory(c);
+                          setSheet(null);
+                          showToast("Category updated");
+                        }}
+                        className={classNames(
+                          "rounded-2xl border px-3 py-3 text-left",
+                          c.group === category.group && c.tag === category.tag
+                            ? "border-blue-500/30 bg-blue-500/10"
+                            : "border-paper-line bg-white"
+                        )}
+                      >
+                        <div className="text-[12px] text-black/55">{c.group}</div>
+                        <div className="text-[14px] font-semibold text-paper-ink">{c.tag}</div>
+                      </button>
+                    ))}
+                  </div>
+                </Modal>
+              ) : null}
+
+              {sheet === "datetime" ? (
+                <Modal title="Date & time" onClose={() => setSheet(null)}>
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="block text-[12px] font-semibold text-black/60">Date</label>
+                      <input
+                        type="date"
+                        className="mt-2 w-full rounded-2xl border border-paper-line px-3 py-3 text-[14px] font-semibold text-paper-ink outline-none focus:border-blue-500/30"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                      />
+                    </div>
+                    <div className="w-32">
+                      <label className="block text-[12px] font-semibold text-black/60">Time</label>
+                      <input
+                        type="time"
+                        className="mt-2 w-full rounded-2xl border border-paper-line px-3 py-3 text-[14px] font-semibold text-paper-ink outline-none focus:border-blue-500/30"
+                        value={time}
+                        onChange={(e) => setTime(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      className="rounded-2xl bg-accent-blue px-4 py-2 text-[13px] font-bold text-white"
+                      onClick={() => {
+                        setSheet(null);
+                        showToast("Date updated");
+                      }}
+                    >
+                      Done
+                    </button>
+                  </div>
+                </Modal>
+              ) : null}
+
+              {sheet === "payment" ? (
+                <Modal title="Payment" onClose={() => setSheet(null)}>
+                  <label className="block text-[12px] font-semibold text-black/60">Method</label>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    {["Tap", "Chip", "Online"].map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => {
+                          setPayment((p) => ({ ...p, method: m }));
+                          setSheet(null);
+                          showToast("Payment updated");
+                        }}
+                        className={classNames(
+                          "rounded-2xl border px-3 py-3 text-[13px] font-semibold",
+                          m === payment.method
+                            ? "border-blue-500/30 bg-blue-500/10 text-accent-blueInk"
+                            : "border-paper-line bg-white text-paper-ink"
+                        )}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-3 text-[12px] text-black/55">
+                    Card: <span className="font-semibold text-paper-ink">{payment.name} •• {payment.last4}</span>
+                  </div>
+                </Modal>
+              ) : null}
+
+              {sheet === "note" ? (
+                <Modal title="Note" onClose={() => setSheet(null)}>
+                  <label className="block text-[12px] font-semibold text-black/60">Description</label>
+                  <textarea
+                    rows={4}
+                    className="mt-2 w-full resize-none rounded-2xl border border-paper-line px-3 py-3 text-[14px] font-semibold text-paper-ink outline-none focus:border-blue-500/30"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                  />
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      className="rounded-2xl bg-accent-blue px-4 py-2 text-[13px] font-bold text-white"
+                      onClick={() => {
+                        setSheet(null);
+                        showToast("Note updated");
+                      }}
+                    >
+                      Done
+                    </button>
+                  </div>
+                </Modal>
+              ) : null}
+            </div>
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<ExpenseEntry />);
+    </script>
+  </body>
+</html>
+
