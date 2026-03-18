@@ -13,13 +13,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Deploy Prototype Folder
+    - name: Deploy Prototype
       run: |
         mkdir -p dist
         cp -r prototype/* dist/
     
-    - name: Deploy to GitHub Pages
+    - name: Deploy to Pages
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./dist
+        publish_branch: gh-pages
+        force_orphan: true
